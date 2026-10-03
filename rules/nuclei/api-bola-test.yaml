@@ -1,0 +1,47 @@
+id: custom-api-bola-test
+
+info:
+  name: BOLA (Broken Object Level Authorization) Test for Loan API
+  author: InfoSecIntern
+  severity: high
+  description: Tests if the API allows accessing other users' loan details by modifying the user_id path parameter.
+  tags: bola, api, auth, custom
+
+requests:
+  - raw:
+      - |
+        POST /api/v1/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "alice"}
+      
+      - |
+        GET /api/v1/user/2/loan HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Bearer {{token}}
+        
+    extractors:
+      - type: json
+        part: body
+        name: token
+        json:
+          - '.access_token'
+        internal: true
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        words:
+          - '"username":"bob"'
+          - '"loan_amount"'
+        condition: and
+        
+      - type: word
+        part: header
+        words:
+          - 'application/json'
