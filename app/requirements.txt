@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+# Intentional vulnerable version for SCA (Dependency Check) demonstration
+PyJWT==1.7.1
+requests==2.25.1
