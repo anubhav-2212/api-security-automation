@@ -1,44 +1,40 @@
-# Moneyview Info-Sec Project: Automated API Security & DevSecOps
+# Automated API Security & DevSecOps Pipeline
 
-This project is built to demonstrate the skills required for the Information Security Intern role at Moneyview.
+This project was built to demonstrate practical Application Security, Security Automation, and DevSecOps skills, specifically aligning with the requirements for Information Security engineering roles.
 
-## Project Structure
+## 🎯 Project Overview
+This repository contains a complete DevSecOps ecosystem:
+1. **The Target:** A mock financial/lending REST API built in Python (FastAPI) containing intentional vulnerabilities.
+2. **Custom Detections:** Custom-written Semgrep (SAST) rules and Nuclei (DAST) templates designed to catch the specific vulnerabilities in the API.
+3. **Security Automation:** A Python script (`sec_scanner.py`) that orchestrates the execution of these security tools and parses their outputs.
+4. **CI/CD Pipeline:** A GitHub Actions workflow that automatically runs Dependency Scanning (SCA), SAST, and DAST on every code push.
 
-- `app/`: A vulnerable FastAPI application representing a lending platform backend.
-- `rules/semgrep/`: Custom SAST rules to find vulnerabilities in the source code (e.g., hardcoded secrets).
-- `rules/nuclei/`: Custom DAST templates to find runtime vulnerabilities (e.g., BOLA).
-- `.github/workflows/`: A simulated DevSecOps pipeline using GitHub Actions.
-- `sec_scanner.py`: A Python automation script that orchestrates the security scans.
+## 🚨 Included Vulnerabilities (OWASP Top 10)
+- **Broken Object Level Authorization (BOLA/IDOR):** An authenticated user can fetch loan details of other users by manipulating the `user_id` parameter.
+- **Hardcoded Secrets:** The JWT signing key is hardcoded directly into the source code.
+- **Vulnerable Dependencies:** The project intentionally uses an outdated, vulnerable version of `PyJWT`.
 
-## How to run locally
+## ⚙️ How the DevSecOps Pipeline Works
+You do not need to run this project locally to see it work! The security checks are completely automated via GitHub Actions.
 
-1. **Install dependencies**:
-   ```bash
-   pip install -r app/requirements.txt
-   pip install -r requirements.txt
-   ```
+If you check the **[Actions tab](../../actions)** in this repository, you will see the automated pipeline:
+1. **SCA:** `safety check` scans `requirements.txt` and flags the outdated `PyJWT` library.
+2. **SAST:** `semgrep` runs the custom rule (`rules/semgrep/fastapi-hardcoded-secret.yaml`) against the codebase and flags the hardcoded JWT secret.
+3. **DAST:** The pipeline spins up the API in a staging environment and runs `nuclei` with a custom template (`rules/nuclei/api-bola-test.yaml`) to actively exploit the BOLA vulnerability.
 
-2. **Start the Vulnerable API**:
-   ```bash
-   cd app
-   uvicorn main:app --reload --port 8000
-   ```
-   *The API will be available at http://127.0.0.1:8000. You can view the swagger docs at http://127.0.0.1:8000/docs.*
+## 🛠️ Testing it Locally (Optional)
+If you wish to run the automation tool locally:
+```bash
+# 1. Install dependencies
+pip install -r app/requirements.txt
+pip install -r requirements.txt
+pip install semgrep
+brew install nuclei # (Mac) or standard Go install
 
-3. **Run the Security Automation Scanner**:
-   Open a new terminal window in the root of the project and ensure you have `semgrep` and `nuclei` installed:
-   ```bash
-   pip install semgrep
-   # For nuclei, see: https://docs.projectdiscovery.io/tools/nuclei/install
-   ```
+# 2. Start the API in the background
+cd app && uvicorn main:app --port 8000 &
 
-   Run the scanner:
-   ```bash
-   ./sec_scanner.py
-   ```
-
-   The scanner will automatically run Semgrep against the `app/` code, and then run Nuclei against the running API.
-
-## Pushing to GitHub
-
-If you initialize this as a git repository and push it to GitHub, the `.github/workflows/devsecops.yml` will automatically trigger, demonstrating a DevSecOps CI/CD pipeline!
+# 3. Run the automated scanner
+cd ..
+./sec_scanner.py
+```
